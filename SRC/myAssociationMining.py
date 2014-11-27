@@ -2,26 +2,39 @@
 
 # Imports
 import apriorialg as ap
-import myKMeans as km
+import loadFile as lf
+import loadData as ld
 
 # turn filter on/off
 # Data filter (Q7)
 filter = 0
 
-
+minSupport = 0.5
+minConfidence = 0.7
+k = 3
 
 # Read the data (Q1)
-dataset = km.load_dataset()
+intervals = lf.createColumnIntervals(minSupport,k)
+
+theData,columnNames = ld.loadData()
+
+#print theData
+#print columnNames
+
+#for items in intervals:
+#   for item in items:
+#       print item.u
+#       print item.l
+
 
 
 # When you get to part 7. you might wish to come back and
 # filter the data here - you could optionally have a variable
 # that is a flag to turn this filtering on and off
-
+"""
 if (filter == 0):
 
-    minSupport = 0.05
-    minConfidence = 0.7
+
     
     # Intresting rules filter (Q5)
     ap.interesting = 0
@@ -71,7 +84,7 @@ if (filter == 1):
     
     # Generate rules - consider apriorialg.py
     rules = ap.generateRules(L,supportData,minConfidence)
-
+"""
         
         
         
