@@ -28,6 +28,6 @@ class Item(object):
         return self.name < other.name
 
     def __eq__(self, other):
-        if not other:
+        if type(self) != type(other):
             return False
         return self.name == other.name and self.l == other.l and self.u == other.u

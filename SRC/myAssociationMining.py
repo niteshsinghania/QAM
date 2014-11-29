@@ -4,9 +4,17 @@
 import apriorialg as ap
 import Data
 
-minSupport = 0.05
+minSupport = 0.02
 minConfidence = 0.001
-k = 5
+k = 10
+
+#minSupport = 0.1
+#minConfidence = 0.001
+#k = 20
+
+#minSupport = 0.25
+#minConfidence = 0.001
+#k = 5
 
 # Read the data
 data = Data.Data()
@@ -21,8 +29,6 @@ theData = data.loadData()
 
 L, sup_data = ap.apriori(theData, columnIntervals, minSupport, k)
 
-print ("L2 Data: " + str(L[1]))
-#print ("Support Data: " + str(sup_data))
 
 rules = ap.generateRules(L, sup_data, minConfidence)
 
@@ -39,5 +45,9 @@ for rule in rules:
     for interval in y:
         rule_str += interval.hStr() + ", "
        
-    rule_str += " Confidence: " + str(rule[2])
+    rule_str += " Confidence: " + str(rule[2][0])
+    rule_str += " Interest: " + str(rule[2][1])
+    rule_str += " PS: " + str(rule[2][3])
+    rule_str += " CoEff: " + str(rule[2][4])
     print(rule_str)
+

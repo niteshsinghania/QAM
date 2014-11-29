@@ -13,43 +13,6 @@ import numpy as np
 import Item
 import Data
 
-
-commonWords = ['W0','W1']
-
-interesting = 0
-
-
-def createC1(dataset):
-    "Create a list of candidate item sets of size one."
-    c1 = []
-    for transaction in dataset:
-        for item in transaction:
-            if not [item] in c1:
-                c1.append([item])
-    c1.sort()
-    #frozenset because it will be a ket of a dictionary.
-    return map(frozenset, c1)
- 
- 
-def scanD(dataset, candidates, min_support):
-    "Returns all candidates that meets a minimum support level"
-    sscnt = {}
-    for tid in dataset:
-        for can in candidates:
-            if can.issubset(tid):
-                sscnt.setdefault(can, 0)
-                sscnt[can] += 1
- 
-    num_items = float(len(dataset))
-    retlist = []
-    support_data = {}
-    for key in sscnt:
-        support = sscnt[key] / num_items
-        if support >= min_support:
-            retlist.insert(0, key)
-        support_data[key] = support
-    return retlist, support_data
-
 def scan_support(dataset, columnIntervals, min_support, k):
     sscnt = {}
     for column_index, colInt in enumerate(columnIntervals):
@@ -142,18 +105,18 @@ def aprioriGen(freq_sets, k):
             L1.sort()
             L2.sort()
             if L1 == L2:
-                s = frozenset([list(freq_sets[i])[0]])
+                s = [list(freq_sets[i])[0]]
                 for inti in freq_sets[i]:
                     for ints in s:
                         if inti.name != ints.name:
-                            s = s.union(frozenset([inti]))
+                            s.append(inti)
 
                 for intj in freq_sets[j]:
                     for ints in s:
                         if intj.name != ints.name:
-                            s = s.union(frozenset([intj]))
+                            s.append(intj)
                 if(len(s) == k):
-                    retList.append(s)
+                    retList.append(frozenset(s))
     return retList
  
  
@@ -161,13 +124,13 @@ def apriori(dataset, column_intervals, minsupport, k):
     "Generate a list of candidate item sets"
     L1, support_data = scan_support(dataset, column_intervals, minsupport, k)
     L = [L1]
-    #for interval in support_data:
-    #    print ("Interval: " + str(interval) + " Support: " + str(support_data[interval]))
+   
     print("At k: 1 len of L is " + str(len(L1)))
 
     k = 2
     while (len(L[k - 2]) > 0):
         Ck = aprioriGen(L[k - 2], k)
+
         Lk, supK = scan_support2(dataset, Ck, minsupport)
         print("At k: " + str(k) + " len of L is " + str(len(Lk)))
         support_data.update(supK)
@@ -186,25 +149,44 @@ def generateRules(L, support_data, min_confidence=0.7,interesting=0):
     for i in range(1, len(L)):
         for freqSet in L[i]:
             H1 = [frozenset([item]) for item in freqSet]
-            #print "freqSet", freqSet, 'H1', H1
             if (i > 1):
                 rules_from_conseq(freqSet, H1, support_data, rules, min_confidence)
             else:
                 calc_confidence(freqSet, H1, support_data, rules, min_confidence)
     return rules
- 
+
+
  
 def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
     "Evaluate the rule generated"
     pruned_H = []
     for conseq in H:
 
-        xUniony = support_data[freqSet]
-        print(' ')
-        for i in list(freqSet - conseq):
-            print("SuppX: " + str(i))
+        stri = ""
+        for interval in freqSet:
+            stri += interval.hStr() + ", "
+        print ("FreqSet: " + stri)
 
-        suppX = support_data[freqSet - conseq]
+        stri = ""
+        for interval in conseq:
+            stri += interval.hStr() + ", "
+        print ("Conseq: " + stri)
+
+        xUniony = support_data[freqSet]
+        diff = []
+        for f in freqSet:
+            for c in conseq:
+                if f.name != c.name:
+                    diff.append(f)
+        
+        x = frozenset(diff)
+
+        stri = ""
+        for interval in x:
+            stri += interval.hStr() + ", "
+        print ("Diff (X): " + stri)
+
+        suppX = support_data[x]
         suppY = support_data[conseq]
 
         conf = xUniony / suppX
@@ -215,7 +197,7 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
         
         #Filter out rules that are less interesting (Q5)
         if conf >= min_confidence:
-                rules.append((freqSet - conseq, conseq, conf))
+                rules.append((x, conseq, [conf, lift, interest, ps, coeff]))
 
     return rules 
  
@@ -228,8 +210,3 @@ def rules_from_conseq(freqSet, H, support_data, rules, min_confidence=0.7):
         Hmp1 = calc_confidence(freqSet, Hmp1,  support_data, rules, min_confidence)
         if len(Hmp1) > 1:
             rules_from_conseq(freqSet, Hmp1, support_data, rules, min_confidence)
-            
-            
-############################################
-
-    
