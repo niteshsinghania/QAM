@@ -2,89 +2,42 @@
 
 # Imports
 import apriorialg as ap
-import loadFile as lf
-import loadData as ld
+import Data
 
-# turn filter on/off
-# Data filter (Q7)
-filter = 0
+minSupport = 0.05
+minConfidence = 0.001
+k = 5
 
-minSupport = 0.5
-minConfidence = 0.7
-k = 3
+# Read the data
+data = Data.Data()
+columnIntervals = data.createColumnIntervals(minSupport,k)
 
-# Read the data (Q1)
-intervals = lf.createColumnIntervals(minSupport,k)
+for col in columnIntervals:
+    for i in col:
+        pass
+        #print(str(i))
 
-theData,columnNames = ld.loadData()
+theData = data.loadData()
 
-#print theData
-#print columnNames
+L, sup_data = ap.apriori(theData, columnIntervals, minSupport, k)
 
-#for items in intervals:
-#   for item in items:
-#       print item.u
-#       print item.l
+print ("L2 Data: " + str(L[1]))
+#print ("Support Data: " + str(sup_data))
 
+rules = ap.generateRules(L, sup_data, minConfidence)
 
+for rule in rules:
+    rule_str = ""
+    x = rule[0]
+    y = rule[1]
 
-# When you get to part 7. you might wish to come back and
-# filter the data here - you could optionally have a variable
-# that is a flag to turn this filtering on and off
-"""
-if (filter == 0):
+    for interval in x:
+        rule_str += interval.hStr() + ", "
 
+    rule_str += " --> "
 
-    
-    # Intresting rules filter (Q5)
-    ap.interesting = 0
-
-    if (ap.interesting == 0):
-        print ''
-        print 'Original Rules:'
-        
-        #(Q2)
-        # Find frequent itemsets - consider apriorialg.py
-        L,supportData= ap.apriori(dataset,minSupport)
-        
-        #(Q3)
-        # Generate rules - consider apriorialg.py
-        rules = ap.generateRules(L,supportData,minConfidence)
-        print 'Total Rules: ', len(rules)
-
-    
-    if (ap.interesting == 1):
-        print ''
-        print 'Interesting Rules:'
-    
-        #(Q2)
-        # Find frequent itemsets - consider apriorialg.py
-        L,supportData= ap.apriori(dataset,minSupport)
-    
-        #(Q3)
-        # Generate rules - consider apriorialg.py
-        rules = ap.generateRules(L,supportData,minConfidence)
-        print 'Total Rules: ', len(rules)
-
-if (filter == 1):
-    
-    minSupport = 0.1
-    minConfidence = 0.7
-    
-    # Intresting rules filter (Q5)
-    ap.interesting = 0
-
-    
-    # Generate interesting rules (Lift,Interest, PS, Phi)
-    print ''
-    print 'Filtered Rules:'
-    
-    # Find frequent itemsets - consider apriorialg.py
-    L,supportData= ap.apriori(dataset,minSupport)
-    
-    # Generate rules - consider apriorialg.py
-    rules = ap.generateRules(L,supportData,minConfidence)
-"""
-        
-        
-        
+    for interval in y:
+        rule_str += interval.hStr() + ", "
+       
+    rule_str += " Confidence: " + str(rule[2])
+    print(rule_str)

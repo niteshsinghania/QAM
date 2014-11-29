@@ -10,7 +10,8 @@ http://aimotion.blogspot.ca/2013/01/machine-learning-and-data-mining.html
 
 import arff
 import numpy as np
-
+import Item
+import Data
 
 
 commonWords = ['W0','W1']
@@ -48,8 +49,88 @@ def scanD(dataset, candidates, min_support):
             retlist.insert(0, key)
         support_data[key] = support
     return retlist, support_data
- 
- 
+
+def scan_support(dataset, columnIntervals, min_support, k):
+    sscnt = {}
+    for column_index, colInt in enumerate(columnIntervals):
+        for interval in colInt:
+            sscnt.setdefault(interval, 0)
+            for tid in dataset:
+                val = tid[column_index]
+                if(val >= interval.l and val <= interval.u):
+                    sscnt[interval] += 1 
+    
+    num_trx = float(len(dataset))
+    '''''
+    count = 0
+    for x in columnIntervals:
+        for y in x:
+            print(y)
+            count += 1
+    if len(sscnt) != count:
+        print ("ERROR didn't count all data sscnt: " + str(len(sscnt)) + " column int: " + str(count))
+    '''''
+    retlist = []
+    support_data = {}
+    for key in sscnt:
+        support = sscnt[key] / num_trx
+        if support >= min_support:
+            retlist.insert(0, frozenset([key]))
+            #Generalize current interval
+            if (key.u != key.l) and (key.next):
+                it = key
+                gen_sup = sscnt[it] / num_trx
+                while(it.next):
+                    it = it.next
+                    if it in sscnt:
+                        gen_sup += sscnt[it] / num_trx
+                    else:
+                        print("ERROR couldn't find" + str(it))
+                    gen_item = Item.Item(key.name, key.l, it.u)
+                    if (gen_sup > 1.0):
+                        print("ERROR gen sup too HIGH!!")
+                    if (gen_sup <= k * support):
+                        retlist.insert(0, frozenset([gen_item]))
+                        support_data[frozenset([gen_item])] = gen_sup
+                    else:
+                        break
+
+        support_data[frozenset([key])] = support
+
+    return retlist, support_data
+
+def scan_support2(dataset, candidates, minSupport):
+    sscnt = {}
+    for tid in dataset:
+        for can in candidates:
+            count = 0
+            for interval in can:
+                colNum = Data.Data.columnNames.index(interval.name)
+                val = tid[colNum]
+                if(val >= interval.l and val <= interval.u):
+                    count += 1
+            if count == len(can):
+                if type(can) != type(frozenset()):
+                    print("ERRORR")
+                sscnt.setdefault(can, 0)
+                sscnt[can] += 1
+
+    num_trx = float(len(dataset))
+
+    retlist = []
+    support_data = {}
+    for key in sscnt:
+        support = sscnt[key] / num_trx
+        if support >= minSupport:
+            retlist.insert(0, key)
+
+        support_data[key] = support
+
+    return retlist, support_data
+
+                
+
+
 def aprioriGen(freq_sets, k):
     "Generate the joint transactions from candidate sets"
     retList = []
@@ -61,20 +142,34 @@ def aprioriGen(freq_sets, k):
             L1.sort()
             L2.sort()
             if L1 == L2:
-                retList.append(freq_sets[i] | freq_sets[j])
+                s = frozenset([list(freq_sets[i])[0]])
+                for inti in freq_sets[i]:
+                    for ints in s:
+                        if inti.name != ints.name:
+                            s = s.union(frozenset([inti]))
+
+                for intj in freq_sets[j]:
+                    for ints in s:
+                        if intj.name != ints.name:
+                            s = s.union(frozenset([intj]))
+                if(len(s) == k):
+                    retList.append(s)
     return retList
  
  
-def apriori(dataset, minsupport=0.5):
+def apriori(dataset, column_intervals, minsupport, k):
     "Generate a list of candidate item sets"
-    C1 = createC1(dataset)
-    D = map(set, dataset)
-    L1, support_data = scanD(D, C1, minsupport)
+    L1, support_data = scan_support(dataset, column_intervals, minsupport, k)
     L = [L1]
+    #for interval in support_data:
+    #    print ("Interval: " + str(interval) + " Support: " + str(support_data[interval]))
+    print("At k: 1 len of L is " + str(len(L1)))
+
     k = 2
     while (len(L[k - 2]) > 0):
         Ck = aprioriGen(L[k - 2], k)
-        Lk, supK = scanD(D, Ck, minsupport)
+        Lk, supK = scan_support2(dataset, Ck, minsupport)
+        print("At k: " + str(k) + " len of L is " + str(len(Lk)))
         support_data.update(supK)
         L.append(Lk)
         k += 1
@@ -105,6 +200,10 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
     for conseq in H:
 
         xUniony = support_data[freqSet]
+        print(' ')
+        for i in list(freqSet - conseq):
+            print("SuppX: " + str(i))
+
         suppX = support_data[freqSet - conseq]
         suppY = support_data[conseq]
 
@@ -116,29 +215,9 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
         
         #Filter out rules that are less interesting (Q5)
         if conf >= min_confidence:
-            if(interesting == 1 and lift >= 3 and interest >= 3 and coeff >= 0.2 and ps >= 0.001):
-                print '(',", ".join(freqSet - conseq),')', '--->', '(',",".join(conseq),')','\n', 'Conf:', conf,'\n','Lift:',lift,'\n','Interest:',interest,'\n','PS:',ps,'\n','Coefficient:', coeff,'\n'
                 rules.append((freqSet - conseq, conseq, conf))
-                pruned_H.append(conseq)
 
-            if (interesting == 0):
-                set1 = list (freqSet-conseq)
-                set2 = list (conseq)
-                checker = None
-                for i in range(len(set1)):
-                    if (set1[i] == 'W2'):
-                        checker = True
-                for i in range(len(set2)):
-                    if (set2[i] == 'W2'):
-                        checker = True
-
-                if  (checker == True):
-                    print '(',", ".join(freqSet - conseq),')', '--->', '(',",".join(conseq),')','\n', 'Conf:', conf,'\n','Lift:',lift,'\n','Interest:',interest,'\n','PS:',ps,'\n','Coefficient:', coeff,'\n'
-                rules.append((freqSet - conseq, conseq, conf))
-                pruned_H.append(conseq)
-
-
-    return pruned_H
+    return rules 
  
  
 def rules_from_conseq(freqSet, H, support_data, rules, min_confidence=0.7):
