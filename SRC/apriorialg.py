@@ -162,15 +162,6 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
     pruned_H = []
     for conseq in H:
 
-        stri = ""
-        for interval in freqSet:
-            stri += interval.hStr() + ", "
-        print ("FreqSet: " + stri)
-
-        stri = ""
-        for interval in conseq:
-            stri += interval.hStr() + ", "
-        print ("Conseq: " + stri)
 
         xUniony = support_data[freqSet]
         diff = []
@@ -180,11 +171,6 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
                     diff.append(f)
         
         x = frozenset(diff)
-
-        stri = ""
-        for interval in x:
-            stri += interval.hStr() + ", "
-        print ("Diff (X): " + stri)
 
         suppX = support_data[x]
         suppY = support_data[conseq]
