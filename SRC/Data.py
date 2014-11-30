@@ -3,9 +3,12 @@ import pymysql
 import Item
 
 class Data(object):
-    columnNames = ['G','W','L','R','AB','H','2B','3B','HR','BB','SO','SB','RA','ER','ERA','HA','HRA','BBA','SOA','E']
+    columnNames = []
+    tableName = None
 
-    def __init__(self):
+    def __init__(self,columnNames,tableName):
+        self.columnNames = columnNames
+        self.tableName = tableName
         pass
 
     def loadData(self):
@@ -17,7 +20,7 @@ class Data(object):
 
         cur = conn.cursor()
 
-        cur.execute("SELECT " + ', '.join(map(str,self.columnNames)) + " FROM Teams WHERE yearID >= '2000'")
+        cur.execute("SELECT " + ', '.join(map(str,self.columnNames)) + " FROM " + self.tableName + " WHERE yearID >= '2000'")
 
         for row in cur:
             tempRow = []
@@ -45,7 +48,9 @@ class Data(object):
             colItems = columnIntervals[i]
             sqlStat = "SELECT "
             sqlStat += self.columnNames[i]
-            sqlStat += " FROM Teams WHERE yearID >= '2000' ORDER BY "
+            sqlStat += " FROM "
+            sqlStat += self.tableName
+            sqlStat += " WHERE yearID >= '2000' ORDER BY "
             sqlStat += self.columnNames[i]
             sqlStat += " ASC"
             cur.execute(sqlStat)

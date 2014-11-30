@@ -62,13 +62,13 @@ def scan_support(dataset, columnIntervals, min_support, k):
 
     return retlist, support_data
 
-def scan_support2(dataset, candidates, minSupport):
+def scan_support2(dataset,columnNames, candidates, minSupport):
     sscnt = {}
     for tid in dataset:
         for can in candidates:
             count = 0
             for interval in can:
-                colNum = Data.Data.columnNames.index(interval.name)
+                colNum = columnNames.index(interval.name)
                 val = tid[colNum]
                 if(val >= interval.l and val <= interval.u):
                     count += 1
@@ -120,7 +120,7 @@ def aprioriGen(freq_sets, k):
     return retList
  
  
-def apriori(dataset, column_intervals, minsupport, k):
+def apriori(dataset, column_intervals,columnNames, minsupport, k):
     "Generate a list of candidate item sets"
     L1, support_data = scan_support(dataset, column_intervals, minsupport, k)
     L = [L1]
@@ -131,7 +131,7 @@ def apriori(dataset, column_intervals, minsupport, k):
     while (len(L[k - 2]) > 0):
         Ck = aprioriGen(L[k - 2], k)
 
-        Lk, supK = scan_support2(dataset, Ck, minsupport)
+        Lk, supK = scan_support2(dataset,columnNames, Ck, minsupport)
         print("At k: " + str(k) + " len of L is " + str(len(Lk)))
         support_data.update(supK)
         L.append(Lk)
