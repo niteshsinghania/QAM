@@ -4,33 +4,22 @@
 import apriorialg as ap
 import Data
 
-minSupport = 0.02
+maxSupport = 0.5
+minSupport = 0.4
 minConfidence = 0.7
-k = 5
-
-#minSupport = 0.1
-#minConfidence = 0.001
-#k = 20
-
-#minSupport = 0.25
-#minConfidence = 0.001
-#k = 5
+K = 19
+R = 4
 
 # Read the data
 columnNames = ['W','L','R','AB','H','2B','3B','HR','BB','SO','SB','RA','ER','ERA','HA','HRA','BBA','SOA','E']
 tableName = ['Teams']
 
 data = Data.Data(columnNames,tableName[0])
-columnIntervals = data.createColumnIntervals(minSupport,k)
-
-for col in columnIntervals:
-    for i in col:
-        pass
-        #print(str(i))
+columnIntervals = data.createColumnIntervals(minSupport,K)
 
 theData = data.loadData()
 
-L, sup_data = ap.apriori(theData, columnIntervals,columnNames, minSupport, k)
+L, sup_data = ap.apriori(theData, columnIntervals,columnNames, minSupport, maxSupport, K)
 
 
 rules = ap.generateRules(L, sup_data, minConfidence)

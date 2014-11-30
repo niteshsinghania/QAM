@@ -13,7 +13,25 @@ import numpy as np
 import Item
 import Data
 
-def scan_support(dataset, columnIntervals, min_support, k):
+# Generalize intervals by combing adjact partitions 
+# stopping when support is above max support
+def generalize_intervals(support_data, min_support, max_support):
+    gen_list = []
+    gen_support_data = {}
+    for fSet in support_data:
+        o_it = it = list(fSet)[0]
+        if (it.u != it.l) and (it.next):
+            while(it.next):
+                it = it.next
+                
+                gen_item = Item.Item(o_it.name, o_it.l, it.u)
+
+                gen_list.insert(0, frozenset([gen_item]))
+
+    return gen_list
+
+
+def scan_support(dataset, columnIntervals, min_support, max_support):
     sscnt = {}
     for column_index, colInt in enumerate(columnIntervals):
         for interval in colInt:
@@ -24,40 +42,12 @@ def scan_support(dataset, columnIntervals, min_support, k):
                     sscnt[interval] += 1 
     
     num_trx = float(len(dataset))
-    '''''
-    count = 0
-    for x in columnIntervals:
-        for y in x:
-            print(y)
-            count += 1
-    if len(sscnt) != count:
-        print ("ERROR didn't count all data sscnt: " + str(len(sscnt)) + " column int: " + str(count))
-    '''''
     retlist = []
     support_data = {}
     for key in sscnt:
         support = sscnt[key] / num_trx
         if support >= min_support:
             retlist.insert(0, frozenset([key]))
-            #Generalize current interval
-            if (key.u != key.l) and (key.next):
-                it = key
-                gen_sup = sscnt[it] / num_trx
-                while(it.next):
-                    it = it.next
-                    if it in sscnt:
-                        gen_sup += sscnt[it] / num_trx
-                    else:
-                        print("ERROR couldn't find" + str(it))
-                    gen_item = Item.Item(key.name, key.l, it.u)
-                    if (gen_sup > 1.0):
-                        print("ERROR gen sup too HIGH!!")
-                    if (gen_sup <= k * support):
-                        retlist.insert(0, frozenset([gen_item]))
-                        support_data[frozenset([gen_item])] = gen_sup
-                    else:
-                        break
-
         support_data[frozenset([key])] = support
 
     return retlist, support_data
@@ -94,8 +84,7 @@ def scan_support2(dataset,columnNames, candidates, minSupport):
                 
 
 
-def aprioriGen(freq_sets, k):
-    "Generate the joint transactions from candidate sets"
+def aprioriGen(freq_sets, k, pruning=False):
     retList = []
     lenLk = len(freq_sets)
     for i in range(lenLk):
@@ -107,34 +96,60 @@ def aprioriGen(freq_sets, k):
             if L1 == L2:
                 s = [list(freq_sets[i])[0]]
                 for inti in freq_sets[i]:
+                    match = False
                     for ints in s:
-                        if inti.name != ints.name:
-                            s.append(inti)
+                        if inti.name == ints.name:
+                            match = True
+                            break
+                    if not match:
+                        s.append(inti)
 
                 for intj in freq_sets[j]:
+                    match = False
                     for ints in s:
-                        if intj.name != ints.name:
-                            s.append(intj)
+                        if intj.name == ints.name:
+                            match = True
+                            break
+                    if not match:
+                        s.append(intj)
+                s_str = ""
+                for interval in s:
+                    s_str += interval.hStr() + ", "
                 if(len(s) == k):
-                    retList.append(frozenset(s))
+                    if pruning and k > 2:
+                        for fs in freq_sets:
+                            if (set(fs).issubset(s)):
+                                retList.append(frozenset(s))
+                                break
+                    else:
+                        retList.append(frozenset(s))
+
     return retList
  
  
-def apriori(dataset, column_intervals,columnNames, minsupport, k):
+def apriori(dataset, column_intervals,columnNames, min_support, max_support, k):
     "Generate a list of candidate item sets"
-    L1, support_data = scan_support(dataset, column_intervals, minsupport, k)
+    L1, support_data = scan_support(dataset, column_intervals, min_support, max_support)
+    Lgeneralized = generalize_intervals(support_data, min_support, max_support)
+    print("Created " + str(len(Lgeneralized)) + " generalized intervals")
+    Lg, sup_data = scan_support2(dataset, columnNames, Lgeneralized, min_support)
+    for fSet in Lg:
+        if sup_data[fSet] > max_support:
+            Lg.remove(fSet)
+    L1 += Lg
+    support_data.update(sup_data)
     L = [L1]
    
     print("At k: 1 len of L is " + str(len(L1)))
 
     k = 2
     while (len(L[k - 2]) > 0):
-        Ck = aprioriGen(L[k - 2], k)
-
-        Lk, supK = scan_support2(dataset,columnNames, Ck, minsupport)
-        print("At k: " + str(k) + " len of L is " + str(len(Lk)))
+        Ck = aprioriGen(L[k - 2], k, pruning=True)
+        Lk, supK = scan_support2(dataset,columnNames, Ck, min_support)
         support_data.update(supK)
         L.append(Lk)
+        print("At k: " + str(k) + " len of L is " + str(len(Lk)))
+
         k += 1
  
     return L, support_data
@@ -179,7 +194,7 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
         lift = conf / suppY
         interest = xUniony / (suppX * suppY)
         ps = xUniony - (suppX * suppY)
-        coeff = ps /((suppX*(1-suppX))*(suppY*(1-suppY)))**(0.5)
+        coeff = 0 #ps /((suppX*(1-suppX))*(suppY*(1-suppY)))**(0.5)
         
         #Filter out rules that are less interesting (Q5)
         if conf >= min_confidence:
