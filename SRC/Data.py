@@ -38,7 +38,7 @@ class Data(object):
         
         n = len(self.columnNames)
         numOfIntervals = int((2*n)/(minSupp*(k-1)))
-        print("Number of Intervals: " + str(numOfIntervals))
+        print("Number of base Intervals: " + str(numOfIntervals))
 
         conn = pymysql.connect(host='attiyat.net', port=3306, user='dm', passwd='encrypted', db='baseball')
 
