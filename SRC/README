@@ -5,3 +5,8 @@ Modules required that not installed from previous assignments.
 -Python Version: 2.7 and 3.4
 
 run python3 myAssociationMining.py
+
+
+Mining algorithm used : Association Mining - Quantitative Association Mining
+Documentation information found:
+http://rakesh.agrawal-family.com/papers/sigmod96qassoc.pdf
