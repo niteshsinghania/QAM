@@ -8,5 +8,5 @@ run python3 myAssociationMining.py
 
 
 Mining algorithm used : Association Mining - Quantitative Association Mining
-Documentation information found:
+Referenced Documentation:
 http://rakesh.agrawal-family.com/papers/sigmod96qassoc.pdf
