@@ -142,10 +142,11 @@ def apriori(dataset, column_intervals,columnNames, min_support, max_support, R):
     support_data.update(sup_data)
 
     #Filter candidates whose support is greater than 1/R
-    for fSet in L1:
-        for item in fSet:
-            if support_data[frozenset([item])] > 1/float(R):
-               L1.remove(fSet) 
+    if R > 0:
+        for fSet in L1:
+            for item in fSet:
+                if support_data[frozenset([item])] > 1/float(R):
+                   L1.remove(fSet) 
     L = [L1]
    
     print("At k: 1 len of L is " + str(len(L1)))
