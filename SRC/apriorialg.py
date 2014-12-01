@@ -127,17 +127,25 @@ def aprioriGen(freq_sets, k, pruning=False):
     return retList
  
  
-def apriori(dataset, column_intervals,columnNames, min_support, max_support, k):
+def apriori(dataset, column_intervals,columnNames, min_support, max_support, R):
     "Generate a list of candidate item sets"
     L1, support_data = scan_support(dataset, column_intervals, min_support, max_support)
     Lgeneralized = generalize_intervals(support_data, min_support, max_support)
     print("Created " + str(len(Lgeneralized)) + " generalized intervals")
     Lg, sup_data = scan_support2(dataset, columnNames, Lgeneralized, min_support)
+
+    #Filter generaliztions greater than max_support
     for fSet in Lg:
         if sup_data[fSet] > max_support:
             Lg.remove(fSet)
     L1 += Lg
     support_data.update(sup_data)
+
+    #Filter candidates whose support is greater than 1/R
+    for fSet in L1:
+        for item in fSet:
+            if support_data[frozenset([item])] > 1/float(R):
+               L1.remove(fSet) 
     L = [L1]
    
     print("At k: 1 len of L is " + str(len(L1)))
@@ -162,6 +170,7 @@ def generateRules(L, support_data, min_confidence=0.7,interesting=0):
     """
     rules = []
     for i in range(1, len(L)):
+        print("Calculating consequene for L" + str(i))
         for freqSet in L[i]:
             H1 = [frozenset([item]) for item in freqSet]
             if (i > 1):
@@ -176,8 +185,6 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
     "Evaluate the rule generated"
     pruned_H = []
     for conseq in H:
-
-
         xUniony = support_data[freqSet]
         diff = []
         for f in freqSet:
@@ -198,9 +205,10 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
         
         #Filter out rules that are less interesting (Q5)
         if conf >= min_confidence:
-                rules.append((x, conseq, [conf, lift, interest, ps, coeff]))
+            rules.append((x, conseq, [conf, lift, interest, ps, coeff]))
+            pruned_H.append(conseq)
 
-    return rules 
+    return pruned_H 
  
  
 def rules_from_conseq(freqSet, H, support_data, rules, min_confidence=0.7):

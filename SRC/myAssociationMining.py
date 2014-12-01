@@ -19,7 +19,7 @@ columnIntervals = data.createColumnIntervals(minSupport,K)
 
 theData = data.loadData()
 
-L, sup_data = ap.apriori(theData, columnIntervals,columnNames, minSupport, maxSupport, K)
+L, sup_data = ap.apriori(theData, columnIntervals,columnNames, minSupport, maxSupport, R)
 
 
 rules = ap.generateRules(L, sup_data, minConfidence)
