@@ -1,0 +1,7 @@
+READ ME
+
+Modules required that not installed from previous assignments.
+-pymysql
+-Python Version: 2.7 and 3.4
+
+run python3 myAssociationMining.py
