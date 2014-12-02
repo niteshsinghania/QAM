@@ -189,24 +189,28 @@ def calc_confidence(freqSet, H, support_data, rules, min_confidence=0.7):
         xUniony = support_data[freqSet]
         diff = []
         for f in freqSet:
+            found = False
             for c in conseq:
-                if f.name != c.name:
+                if f.name == c.name:
+                    found = True
+            if found == False:
                     diff.append(f)
-        
+    
         x = frozenset(diff)
+        
 
         suppX = support_data[x]
         suppY = support_data[conseq]
-
+        conv = 0
         conf = xUniony / suppX
         lift = conf / suppY
-        interest = xUniony / (suppX * suppY)
         ps = xUniony - (suppX * suppY)
-        coeff = 0 #ps /((suppX*(1-suppX))*(suppY*(1-suppY)))**(0.5)
+        if (conf != 1):
+            conv = (1 - suppY ) / (1 - conf)
         
         #Filter out rules that are less interesting (Q5)
         if conf >= min_confidence:
-            rules.append((x, conseq, [conf, lift, interest, ps, coeff]))
+            rules.append((x, conseq, [conf, lift, ps, conv]))
             pruned_H.append(conseq)
 
     return pruned_H 
