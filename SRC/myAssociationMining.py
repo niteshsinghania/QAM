@@ -6,11 +6,12 @@ import Data
 import numpy as np
 
 
-maxSupport = 0.24
-minSupport = 0.24
+
+maxSupport = 0.5
+minSupport = 0.5
 minConfidence = 0.8
-K = 17
-R = 10
+K = 6
+R = 5
 
 # Read the data
 columnNames = ['W','AB','H','2B','3B','HR','BB','SO','SB','RA','HA','HRA','BBA','SOA','E']
@@ -42,7 +43,7 @@ for rule in rules:
         else:
             rank += ((statsMean[index] - rule[2][index])/ statsStd[index])
         rule[2].append(rank)
-sortedRules = sorted(rules, key = lambda x: x[2][4])
+sortedRules = sorted(rules, key = lambda x: x[2][4], reverse = True)
 
 sortedRulesW = []
 
@@ -74,7 +75,6 @@ for rule in sortedRulesW[0:10]:
     for interval in y:
         rule_str += interval.hStr() + ", "
 
-    rank = rank/len(statsMean)
     rule_str += "\n"
     rule_str += " Confidence: " + str(rule[2][0])
     rule_str += "\n"
@@ -84,6 +84,6 @@ for rule in sortedRulesW[0:10]:
     rule_str += "\n"
     rule_str += " Conv: " + str(rule[2][3])
     rule_str += "\n"
-    rule_str += " Rank: " + str(rank)
+    rule_str += " Rank: " + str(rule[2][4])
 
     print(rule_str)
