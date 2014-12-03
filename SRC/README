@@ -11,6 +11,9 @@ Mining algorithm used : Association Mining - Quantitative Association Mining
 Referenced Documentation:
 http://rakesh.agrawal-family.com/papers/sigmod96qassoc.pdf
 
+Database MLB 2000 to 2013 statistics tables:Teams, Fielding, and Batting
+http://seanlahman.com/baseball-archive/statistics/
+
 2.8  Teams table
 
 yearID         Year
